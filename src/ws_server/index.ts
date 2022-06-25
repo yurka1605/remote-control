@@ -1,39 +1,34 @@
 
 import 'dotenv/config';
-import { Duplex, pipeline } from 'stream';
-import WebSocket, { WebSocketServer } from 'ws';
-import { transformStream } from './handler';
+import { pipeline } from 'stream';
+import WebSocket, { createWebSocketStream, WebSocketServer } from 'ws';
+import { createHandleStream } from './handler';
 
 export const runWsServer = (host: string, port: number) => {
   console.log(`Start websocket server on the ${port} port!`);
-  const wsServer = new WebSocketServer({ host, port })
+  const websocketServer = new WebSocketServer({ host, port });
 
-  wsServer.on('connection', (ws: WebSocket.WebSocket) => {
-    console.log('New connection started!');
-    const dispatcher = new Duplex({
-      read: () => { },
-      write: (chunk, encoding, next) => {
-        console.log(chunk);
-        if (Buffer.isBuffer(chunk)) {
-          chunk = chunk.toString();
-        }
-        ws.send(chunk);
-        next();
-      },
-    });
+  websocketServer
+    .on('connection', (ws: WebSocket.WebSocket) => {
+      console.log('New connection started!');
+      const websocketStream = createWebSocketStream(ws, {
+        decodeStrings: false,
+        encoding: 'utf8',
+      }).on(
+        'close', () => console.log('Connection was closed')
+      );
 
-    pipeline(
-      dispatcher,
-      transformStream,
-      dispatcher,
-      err => {
-        if (err) {
-          console.log('connection err:', err);
-          ws.send(err.message);
-        }
-      },
-    )
-
-    ws.on('message', (data: WebSocket.RawData) => dispatcher.push(data));
-  });
+      pipeline(
+        websocketStream,
+        createHandleStream(),
+        websocketStream,
+        err => {
+          if (err) {
+            console.log('connection err:', err);
+          }
+        },
+      );
+    })
+    .on('error', console.log)
+    .on('close', () => console.log('Connection was closed!'));
 };
