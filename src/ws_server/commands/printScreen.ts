@@ -1,6 +1,5 @@
 import Jimp from 'jimp';
 import robot from 'robotjs';
-import { CommandsEnum } from '../models';
 
 export const printScreen = async (width = 200, height = 200): Promise<string> => {
   const { x, y } = robot.getMousePos();
