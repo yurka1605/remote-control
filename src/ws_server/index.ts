@@ -30,5 +30,5 @@ export const runWsServer = (host: string, port: number) => {
       );
     })
     .on('error', console.log)
-    .on('close', () => console.log('Connection was closed!'));
+    .on('close', () => console.log('Server was closed!'));
 };
