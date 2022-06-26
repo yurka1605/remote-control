@@ -31,4 +31,10 @@ export const runWsServer = (host: string, port: number) => {
     })
     .on('error', console.log)
     .on('close', () => console.log('Server was closed!'));
+
+  process.on('SIGINT', () => {
+    websocketServer.close();
+    console.log('Websocket server was closed!');
+    process.exit();
+  });
 };
